@@ -215,6 +215,12 @@ class TestParse(TestCase):
         self.assertEqual('CHECKING', ofx.accounts[0].account_type)
         self.assertEqual('SAVINGS', ofx.accounts[1].account_type)
 
+    def testParseCurrency(self):
+        with open_file('creditcard_currency.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertEqual('USD', ofx.account.statement.transactions[0].currency)
+        self.assertIsNone(ofx.account.statement.transactions[1].currency)
+
 
 class TestStringToDate(TestCase):
     ''' Test the string to date parser '''
