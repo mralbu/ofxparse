@@ -22,6 +22,7 @@ else:
 
 from . import mcc
 
+
 def soup_maker(fh):
     try:
         from bs4 import BeautifulSoup
@@ -156,7 +157,7 @@ class OfxPreprocessedFile(OfxFile):
 
         # find all closing tags as hints
         closing_tags = [t.upper() for t in re.findall(r'(?i)</([a-z0-9_\.]+)>',
-                        ofx_string)]
+                                                      ofx_string)]
 
         # close all tags that don't have closing tags and
         # leave all other data intact
@@ -221,11 +222,13 @@ class InvestmentAccount(Account):
         super(InvestmentAccount, self).__init__()
         self.brokerid = ''
 
+
 class BrokerageBalance:
     def __init__(self):
         self.name = None
         self.description = None
-        self.value = None # decimal
+        self.value = None  # decimal
+
 
 class Security:
     def __init__(self, uniqueid, name, ticker, memo):
@@ -312,6 +315,7 @@ class Transaction(object):
         self.mcc = ''
         self.checknum = ''
         self.currency = None
+        self.currency_exchange_rate = None
 
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
@@ -729,7 +733,7 @@ class OfxParser(object):
 
         invbal_ofx = invstmtrs_ofx.find('invbal')
         if invbal_ofx is not None:
-            #<AVAILCASH>18073.98<MARGINBALANCE>+00000000000.00<SHORTBALANCE>+00000000000.00<BUYPOWER>+00000000000.00
+            # <AVAILCASH>18073.98<MARGINBALANCE>+00000000000.00<SHORTBALANCE>+00000000000.00<BUYPOWER>+00000000000.00
             availcash_ofx = invbal_ofx.find('availcash')
             if availcash_ofx is not None:
                 statement.available_cash = cls_.toDecimal(availcash_ofx)
@@ -753,7 +757,8 @@ class OfxParser(object):
                         brokerage_balance.name = name_ofx.contents[0].strip()
                     description_ofx = balance_ofx.find('desc')
                     if description_ofx is not None:
-                        brokerage_balance.description = description_ofx.contents[0].strip()
+                        brokerage_balance.description = description_ofx.contents[0].strip(
+                        )
                     value_ofx = balance_ofx.find('value')
                     if value_ofx is not None:
                         brokerage_balance.value = cls_.toDecimal(value_ofx)
@@ -1057,7 +1062,10 @@ class OfxParser(object):
         currency_tag = txn_ofx.find('currency')
         if hasattr(currency_tag, 'contents'):
             try:
-                transaction.currency = currency_tag.contents[0].strip()
+                transaction.currency = currency_tag.find(
+                    'cursym').contents[0].strip()
+                transaction.currency_exchange_rate = float(currency_tag.find(
+                    'currate').contents[0].strip())
             except IndexError:
                 pass
             except AttributeError:
